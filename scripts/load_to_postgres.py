@@ -12,7 +12,7 @@ def get_engine():
     )
     return create_engine(url)
 
-def load_to_postgres(df: pd.DataFrame, table: str = "loans", chunksize: int = 5000) -> None:
+def load_to_postgres(df: pd.DataFrame, table: str = "lending_club_loans", chunksize: int = 5000) -> None:
     """Load DataFrame into Postgres in chunks."""
     engine = get_engine()
     df.to_sql(table, engine, if_exists="append", index=False, chunksize=chunksize, method="multi")

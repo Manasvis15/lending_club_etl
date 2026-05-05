@@ -4,17 +4,26 @@ data/
 *.zip
 *.parquet
 
-# Python
-__pycache__/
-*.pyc
-.venv/
-
-# Env secrets
-.env
-
 # Jupyter checkpoints
 .ipynb_checkpoints/
 
 # Airflow
 airflow/logs/
 airflow/plugins/
+airflow/airflow.db
+airflow/airflow-webserver.pid
+airflow/airflow.cfg
+airflow/webserver_config.py
+
+# Python
+get-pip.py
+__pycache__/
+*.pyc
+.venv/
+
+# Data (too large for git)
+data/raw/
+data/processed/
+
+# Environment
+.env
