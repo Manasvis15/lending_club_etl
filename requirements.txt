@@ -1,1 +1,36 @@
+# Core
+pandas==2.1.0
+numpy<2
+python-dateutil
+
+# Visualisation
+matplotlib
+seaborn
+
+# Machine Learning
+scikit-learn
+
+# Statistical Analysis
+statsmodels
+scipy
+
+# Database
+sqlalchemy
+psycopg2-binary
+
+# File formats
+pyarrow
+fastparquet
+openpyxl
+
+# Notebook
+jupyter
+ipykernel
+ipywidgets
+
+# Airflow
 apache-airflow==2.9.1
+
+# Utilities
+urllib3
+python-dotenv
