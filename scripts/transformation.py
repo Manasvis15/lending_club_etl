@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 DEFAULT_STATUSES = [
     "Charged Off", "Default",
@@ -49,6 +52,6 @@ def transform_pipeline(df: pd.DataFrame) -> pd.DataFrame:
     df = create_income_to_loan_ratio(df)
     df = create_fico_midpoint(df)
     df = create_issue_year_month(df)
-    df.to_parquet("/home/hp/projects/lending_club_fin/data/processed/transformed.parquet", index=False)
+    df.to_parquet(SCRIPT_DIR.parent / "data" / "processed" / "transformed.parquet", index=False)
     print(f"[Transform] Final shape: {df.shape}")
     return df
