@@ -48,8 +48,7 @@ project/
 ## 📦 Dataset
 
 **Source:** [All Lending Club Loan Dataset from Kaggle - https://www.kaggle.com/datasets/wordsforthewise/lending-club/data]```
-
-### Columns (151 original)
+columns original 151
 
 **Stack**
 
