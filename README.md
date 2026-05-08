@@ -109,7 +109,7 @@ airflow users create --username admin --password admin \
 
 Running the Pipeline
 Every session
-bash - 
+bash -
 cd ~/projects/lending_club_fin
 source .venv/bin/activate
 export AIRFLOW_HOME=~/projects/lending_club_fin/airflow
