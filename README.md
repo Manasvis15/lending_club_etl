@@ -1,274 +1,178 @@
-# 📊 Lending Club Dataset
----
+**#🏦 The Anatomy of Default**
+A Data Engineering Portfolio Project — Lending Club 2007–2018
+An analytics project that ingests, cleans, transforms, and loads 1.8 million Lending Club loan records into PostgreSQL, orchestrated by Apache Airflow and visualized in Grafana. The central question: who fails to pay back a loan — and can we predict it from information available at origination?
 
-## 🏗️ Architecture
+**📐 Architecture**
+Kaggle CSV
+    │
+    ▼
+[ingestion.py]          Download → validate → save raw parquet
+    │
+    ▼
+[cleaning.py]           Drop leakage/sparse cols, fix dtypes,
+                        impute, deduplicate
+    │
+    ▼
+[transformation.py]     Engineer features + build 4 mart aggregations
+    │
+    ▼
+[load_to_postgres.py]   Bulk COPY to PostgreSQL (truncate → load)
+    │
+    ▼
+Grafana Dashboard       "Anatomy of Default" story panels
+Orchestrated end-to-end by Apache Airflow (etl_pipeline.py).
 
-```
-Raw Data (Kaggle)
-       ↓
-   Ingestion
-   (Python)
-       ↓
-Cleaning & Transformation
-   (Python Scripts)
-       ↓
-Apache Airflow
-(ETL Orchestration)
-       ↓
- Processed Data
- (Parquet/CSV)
-       ↓
-   PostgreSQL
-  (finance_db)
-       ↓
-  Grafana
-(Dashboards)
-```
-
----
-
-## 📁 Project Structure
-
-```
-finance-economic-pipeline/
-│
+**🗂 Project Structure**
+project/
 ├── airflow/
 │   └── dags/
-│       └── etl_pipeline.py          # Airflow DAG — orchestrates full ETL
-│
+│       └── etl_pipeline.py       # Airflow DAG — task graph & scheduling
 ├── data/
-│   ├── raw/
-│   │   ├── finance_economic_dataset.csv   # Original Kaggle dataset
-│   │   ├── data_80.csv                    # 80% training split
-│   │   └── data_20.csv                    # 20% holdout split
-│   └── processed/
-│       └── processed.parquet              # Cleaned & transformed data
-│
+│   ├── raw/                      # data_80.parquet (not in git)
+│   └── processed/                # intermediate parquet - cleaned.parquet, transformed.parquet (not in git)
 ├── db/
-│   └── init.sql                     # PostgreSQL table schema
-│
-├── notebooks/
-│   ├── eda.ipynb                    # Exploratory data analysi
-│
+│   └── init.sql                  # PostgreSQL schema (run once)
 ├── scripts/
-│   └── load_to_postgres.py          # Loads processed data into PostgreSQL
-│   ├── ingestion.py                 # load_csv, load_parquet functions
-│   ├── cleaning.py                  # Cleaning functions
-│   ├── transformation.py            # Transformation functions
-│
-├── .gitignore
+│   ├── ingestion.py              # Download, validate, save raw data
+│   ├── cleaning.py               # All cleaning steps as pure functions
+│   ├── transformation.py         # Feature engineering 
+│   └── load_to_postgres.py       # Bulk COPY parquet → Postgres tables
+├── dashboards/
+│   └── grafana_json/             # Dashboard
+├── notebooks/
+│   └── EDA.ipynb                 # Exploratory data analysis
+├── .env                          # DB credentials (not in git)
 ├── requirements.txt
 └── README.md
-```
-
----
 
 ## 📦 Dataset
 
-**Source:** [All Lending Club Loan Dataset from Kaggle]```
+**Source:** [All Lending Club Loan Dataset from Kaggle - https://www.kaggle.com/datasets/wordsforthewise/lending-club/data]```
 
 ### Columns (151 original)
 
-### Engineered Features (10 additional)
-| Feature | Description |
-|---|---|
-| `Daily_Return (%)` | % gain/loss between open and close price |
-| `Misery_Index` | Inflation Rate + Unemployment Rate |
-| `Real_Interest_Rate (%)` | Interest Rate − Inflation Rate |
-| `Volatility_Band (%)` | Daily high-low range as % of close price |
-| `Economic_Health_Score` | Composite of GDP, confidence and profits |
-| `Year` | Extracted from Date |
-| `Month` | Extracted from Date |
-| `Quarter` | Extracted from Date |
-| `Month_Name` | Extracted from Date |
-| `Stock_Index_encoded` | Label encoded Stock Index |
+**Stack**
 
----
+Python 3.11 — core language
+Apache Airflow 2.9.1 — pipeline orchestration and scheduling
+PostgreSQL 16 — data warehouse (port 5434)
+Grafana 11 — dashboards and visualization
+pandas / numpy — data processing
+psycopg2 — PostgreSQL driver
+WSL Ubuntu 24.04 — local Linux environment (no Docker)
 
-## 🛠️ Tech Stack
+**Pipeline**
+raw CSV → ingestion → cleaning → transformation → load_to_postgres
 
-| Tool | Purpose |
-|---|---|
-| Python 3.12 | Core language |
-| Pandas | Data manipulation |
-| NumPy | Numerical computing |
-| Scikit-learn | ML models and preprocessing |
-| Matplotlib / Seaborn | Visualisation |
-| Statsmodels / SciPy | Statistical analysis |
-| PostgreSQL 18 | Data warehouse |
-| SQLAlchemy + psycopg2 | PostgreSQL connection |
-| Apache Airflow 3.x | Pipeline orchestration |
-| Grafana | Dashboard and visualisation |
-| Git / GitHub | Version control |
+Risk Band Definition
+Low Risk FICO ≥ 740 and DTI < 15 
+Medium Risk FICO ≥ 680 and DTI < 25
+High Risk FICO ≥ 620 
+Very High Risk - Everything else
 
----
+**SETUP
+Prerequisites**
 
-## 🚀 How to Run
+WSL Ubuntu 24.04
+Python 3.11
+PostgreSQL 16 running on port 5434
 
-### Prerequisites
-- Python 3.12
-- PostgreSQL 18
-- Apache Airflow (via WSL/Debian)
-- Git
+**Install**
+bashgit clone <your-repo-url>
+cd lending_club_fin
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install "apache-airflow[postgres]==2.9.1" \
+  --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.1/constraints-3.11.txt"
+  
+**Configure -** .env
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_HOST=localhost
+DB_PORT=5434
+DB_NAME=lending_club
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/Manasvis15/finance-economic-pipeline.git
-cd finance-economic-pipeline
-```
+**Create database**
+bash - sudo -u postgres psql -p 5434
 
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-```
+sql - 
+CREATE DATABASE airflow_db;
+CREATE DATABASE lending_club;
+ALTER USER postgres WITH PASSWORD 'postgres';
+Initialize Airflow
 
-### 3. Download the dataset
-Download from [Kaggle]
-```
-data/raw/data_80.csv
-```
+bash - 
+export AIRFLOW_HOME=~/projects/lending_club_fin/airflow
+airflow db migrate
+airflow users create --username admin --password admin \
+  --firstname Admin --lastname User --role Admin \
+  --email admin@example.com
 
-### 4. Set up PostgreSQL
-```bash
-# Create database
-psql -U postgres
-CREATE DATABASE lending_club_loans;
-\q
+Running the Pipeline
+Every session
+bash - 
+cd ~/projects/lending_club_fin
+source .venv/bin/activate
+export AIRFLOW_HOME=~/projects/lending_club_fin/airflow
+sudo service postgresql start
 
-# Create table
-psql -U postgres -d lending_club_loans -f db/init.sql
-```
+**Start Airflow**
+bash - 
+# Terminal 1
+airflow webserver --port 8080
 
-### 5. Run the notebook
-```
-1. notebooks/eda.ipynb
-```
+# Terminal 2
+airflow scheduler
 
-### 6. Load data to PostgreSQL
-```bash
-python scripts/load_to_postgres.py
-```
+# Terminal 3 — trigger manually
+airflow dags unpause lending_club_etl
+airflow dags trigger lending_club_etl
 
-### 7. Run Airflow (via WSL/Debian)
-```bash
-# Activate virtual environment
-source ~/airflow-venv/bin/activate
+Open http://localhost:8080 → login admin / admin
 
-# Start Airflow
-export AIRFLOW_HOME=~/airflow
-airflow standalone
-```
-Open `http://localhost:8081` and trigger `finance_etl_pipeline` DAG.
+**Airflow DAG**
+#Property: Value
+DAG ID: lending_club_etl
+Schedule: @daily
+Tasks: ingestion → cleaning → transformation → load_to_postgres
+Retries: 1 per task, 5 minute delay
+Executor: LocalExecutor
+Metadata DB: PostgreSQL (airflow_db)
 
----
+**Grafana Dashboard**
+#Start Grafana
+bash - 
+cd ~/grafana-v11.0.0
+./bin/grafana-server &
 
-## 🔄 ETL Pipeline
+Open http://localhost:3000 → login admin / admin
 
-The Airflow DAG `lending_club_pipeline` automates the full pipeline:
+**Connect PostgreSQL**
+#Setting: Value
+Hostlocalhost:5434
+Database: lending_club
+User: grafana
+Password: grafana
+SSL Mode: disable
 
-```
-Task 1: Ingestion
-        ↓
-Task 2: Cleaning & Transformation
-        ↓
-Task 3: Load to PostgreSQL
-```
+**Dashboard Structure**
+Row 1 — Overview
+Portfolio size, default rate, average interest rate, average borrower income, lending velocity over time, regional exposure heatmap.
+Row 2 — Risk Analysis
+Average rate vs default rate over time, default rate by risk band, default rate by grade, grade-wise loan volumes. Filterable by grade variable.
+Row 3 — Borrower Profile
+Default rate by loan purpose, default rate by employment length, average FICO by outcome, DTI vs FICO by risk band, default rate by state. Filterable by state variable.
 
-**Schedule:** Daily  
-**DAG file:** `airflow/dags/etl_pipeline.py`
+**Key Findings**
 
----
+Overall default rate across 1.8M loans is approximately 14%
+Default rate increases monotonically from Grade A to Grade G
+Very High Risk borrowers (low FICO, high DTI) default at significantly higher rates than Low Risk borrowers
+Employment length shows a weak but present inverse relationship with default — shorter tenure correlates with slightly higher default rates
+Loan purpose matters — small business and debt consolidation loans carry higher default rates than major purchase or home improvement loans
+The platform's interest rate pricing closely tracks default rate over time, suggesting the risk was priced in but not eliminated
 
-## 🧹 Data Cleaning Steps
 
-| Step | Method |
-|---|---|
-| Null values | Median fill for numeric, mode fill for categorical |
-| Duplicates | Dropped and index reset |
-| Date format | Standardised to YYYY-MM-DD |
-| Text formatting | Stripped and uppercased |
-| Outliers | IQR capping (1.5 × IQR) |
-
----
-
-## 📊 EDA Highlights
-
-- **Missing value analysis** — bar charts of null percentages per column
-- **Distribution plots** — histograms with KDE for all 34 columns
-- **Correlation heatmap** — relationships between all numeric indicators
-- **Outlier detection** — IQR-based boxplots per column
-- **Skewness & kurtosis** — normality assessment
-- **Time series trends** — all indicators plotted over 2000–present
-- **EDA summary report** — consolidated findings
-
----
-
-## 🗄️ PostgreSQL Schema
-
-**Database:** `lending_club_loans`  
-**Table:** `lending_club`  
-**Rows:** 1808561  
-**Columns:** 151  
-
-```sql
--- Connect
-psql -U postgres -d lending_club_loans
-
--- Check row count
-SELECT COUNT(*) FROM lending_club_loans;
-
--- Check date range
-SELECT MIN("Date"), MAX("Date") FROM lending_club_loans;
-```
-
----
-
-## ⚙️ Configuration
-
-Update credentials in `scripts/load_to_postgres.py`:
-```python
-DB_CONFIG = {
-    'host'    : 'localhost',
-    'port'    : 5434,
-    'database': 'lending_club_loans',
-    'user'    : 'postgres',
-    'password': 'postgres'
-}
-```
-
----
-
-## 📋 Requirements
-
-```
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-statsmodels
-scipy
-sqlalchemy
-psycopg2-binary
-pyarrow
-apache-airflow
-jupyter
-```
-
-Install all:
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## 👤 Author
-
-**Manasvi**  
-GitHub: [@Manasvis15](https://github.com/Manasvis15)
-
----
-
-## 📄 License
-
-This project is for educational and portfolio purposes.
+Data
+Source: Lending Club Loan Data (Kaggle) — 1,808,532 rows after cleaning across 30 columns (24 original + 6 engineered).
+Raw data excluded from version control due to file size.
