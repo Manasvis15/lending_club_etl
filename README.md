@@ -1,4 +1,4 @@
-**#🏦 The Anatomy of Default**
+**##🏦 The Anatomy of Default**
 A Data Engineering Portfolio Project — Lending Club 2007–2018
 An analytics project that ingests, cleans, transforms, and loads 1.8 million Lending Club loan records into PostgreSQL, orchestrated by Apache Airflow and visualized in Grafana. The central question: who fails to pay back a loan — and can we predict it from information available at origination?
 
@@ -75,7 +75,7 @@ Prerequisites**
 
 WSL Ubuntu 24.04
 Python 3.11
-PostgreSQL 16 running on port 5434
+PostgreSQL 16 running on port 5432
 
 **Install**
 bashgit clone <your-repo-url>
@@ -93,7 +93,7 @@ DB_PORT=5434
 DB_NAME=lending_club
 
 **Create database**
-bash - sudo -u postgres psql -p 5434
+bash - sudo -u postgres psql -p 5432
 
 sql - 
 CREATE DATABASE airflow_db;
@@ -118,13 +118,13 @@ sudo service postgresql start
 
 **Start Airflow**
 bash - 
-# Terminal 1
+#Terminal 1
 airflow webserver --port 8080
 
-# Terminal 2
+#Terminal 2
 airflow scheduler
 
-# Terminal 3 — trigger manually
+#Terminal 3 - trigger manually
 airflow dags unpause lending_club_etl
 airflow dags trigger lending_club_etl
 
@@ -173,6 +173,6 @@ Loan purpose matters — small business and debt consolidation loans carry highe
 The platform's interest rate pricing closely tracks default rate over time, suggesting the risk was priced in but not eliminated
 
 
-Data
+**Data**
 Source: Lending Club Loan Data (Kaggle) — 1,808,532 rows after cleaning across 30 columns (24 original + 6 engineered).
 Raw data excluded from version control due to file size.
