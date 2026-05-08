@@ -54,11 +54,11 @@ columns original 151
 
 Python 3.11 — core language
 Apache Airflow 2.9.1 — pipeline orchestration and scheduling
-PostgreSQL 16 — data warehouse (port 5434)
+PostgreSQL 16 — data warehouse (port 5432)
 Grafana 11 — dashboards and visualization
 pandas / numpy — data processing
 psycopg2 — PostgreSQL driver
-WSL Ubuntu 24.04 — local Linux environment (no Docker)
+WSL Ubuntu 24.04 — local Linux environment (no Docker, local installation)
 
 **Pipeline**
 raw CSV → ingestion → cleaning → transformation → load_to_postgres
@@ -110,7 +110,7 @@ airflow users create --username admin --password admin \
 Running the Pipeline
 Every session
 bash -
-cd ~/projects/lending_club_fin
+cd ~~/projects/lending_club_fin
 source .venv/bin/activate
 export AIRFLOW_HOME=~/projects/lending_club_fin/airflow
 sudo service postgresql start
