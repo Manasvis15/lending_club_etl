@@ -1,4 +1,4 @@
-**##🏦 The Anatomy of Default**
+## 🏦 THE ANATOMY OF DEFAULT
 A Data Engineering Portfolio Project — Lending Club 2007–2018
 An analytics project that ingests, cleans, transforms, and loads 1.8 million Lending Club loan records into PostgreSQL, orchestrated by Apache Airflow and visualized in Grafana. The central question: who fails to pay back a loan — and can we predict it from information available at origination?
 
