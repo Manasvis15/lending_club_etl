@@ -21,7 +21,7 @@ def run_ingestion(**context):
     df = load_raw_data(str(DATA_RAW))
     save_raw_snapshot(df, str(DATA_PROC / "raw_snapshot.parquet"))
     print(f"[DAG] Ingestion complete — {len(df):,} rows")
-
+    
 
 def run_cleaning(**context):
     import pandas as pd
