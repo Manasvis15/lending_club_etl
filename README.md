@@ -3,6 +3,7 @@ A Data Engineering Portfolio Project — Lending Club 2007–2018
 An analytics project that ingests, cleans, transforms, and loads 1.8 million Lending Club loan records into PostgreSQL, orchestrated by Apache Airflow and visualized in Grafana. The central question: who fails to pay back a loan — and can we predict it from information available at origination?
 
 **📐 Architecture**
+'''
 Kaggle CSV
     │
     ▼
@@ -21,7 +22,7 @@ Kaggle CSV
     ▼
 Grafana Dashboard       "Anatomy of Default" story panels
 Orchestrated end-to-end by Apache Airflow (etl_pipeline.py).
-
+'''
 **🗂 Project Structure**
 project/
 ├── airflow/
@@ -164,7 +165,7 @@ Default rate by loan purpose, default rate by employment length, average FICO by
 
 **Key Findings**
 
-Overall default rate across 1.8M loans is approximately 14%
+Overall default rate across 1.8M loans is approximately 11.9%
 Default rate increases monotonically from Grade A to Grade G
 Very High Risk borrowers (low FICO, high DTI) default at significantly higher rates than Low Risk borrowers
 Employment length shows a weak but present inverse relationship with default — shorter tenure correlates with slightly higher default rates
