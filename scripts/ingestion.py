@@ -19,7 +19,7 @@ def load_raw_data(filepath: str) -> pd.DataFrame:
     """Load raw Lending Club CSV and return DataFrame."""
 
 # 2. Go up one level to 'project/', then down into 'data/raw/'
-    filepath = SCRIPT_DIR.parent / "data" / "raw" / "data_80.csv"
+    filepath = SCRIPT_DIR.parent / "data" / "raw" / "data_20.csv"
 
     df = pd.read_csv(filepath, low_memory=False, dtype=str)
     print(f"[Ingestion] Loaded {len(df):,} rows, {df.shape[1]} columns")
@@ -32,5 +32,5 @@ def save_raw_snapshot(df: pd.DataFrame, out_path: str) -> None:
     print(f"[Ingestion] Snapshot saved → {out_path}")
 
 if __name__ == "__main__":
-    df = load_raw_data("data/raw/data_80.csv")
+    df = load_raw_data("data/raw/data_20.csv")
     save_raw_snapshot(df, "data/processed/raw_snapshot.parquet")
