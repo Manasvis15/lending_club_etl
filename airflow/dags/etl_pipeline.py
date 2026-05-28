@@ -42,7 +42,6 @@ def load_loans():
 
 
 def train_models():
-    """Train XGBoost and KMeans, save models to disk."""
     df = load_data()
 
     # Default prediction
@@ -53,12 +52,11 @@ def train_models():
     xgb_model, _, _ = train_xgboost(X_train, X_test, y_train, y_test)
     save_model(xgb_model, scaler, X.columns)
 
-    # Risk segmentation
-    X_cluster, X_scaled, cluster_cols, cluster_scaler = prepare_clustering_features(df.copy())
-    best_k = plot_silhouette(X_scaled)
-    km_model, _ = fit_kmeans(X_scaled, best_k)
+    # Risk segmentation — use sample + fixed K
+    df_sample = df.sample(frac=0.1, random_state=42)
+    X_cluster, X_scaled, cluster_cols, cluster_scaler = prepare_clustering_features(df_sample.copy())
+    km_model, _ = fit_kmeans(X_scaled, k=4)
     save_clustering_model(km_model, cluster_scaler, cluster_cols)
-
 
 def load_predictions():
     """Load predictions to postgres after models are trained."""

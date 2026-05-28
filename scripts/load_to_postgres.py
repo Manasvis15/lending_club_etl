@@ -26,7 +26,8 @@ def get_engine():
 def load_to_postgres(df: pd.DataFrame, table: str = "lending_club_loans", chunksize: int = 5000) -> None:
     """Load transformed DataFrame into Postgres in chunks."""
     engine = get_engine()
-    df.to_sql(table, engine, if_exists="append", index=False, chunksize=chunksize, method="multi")
+    with engine.begin() as conn:
+        df.to_sql(table, conn, if_exists="replace", index=False, chunksize=chunksize, method="multi")
     print(f"[Load] {len(df):,} rows → {table}")
 
 
@@ -98,8 +99,9 @@ def load_predictions_to_postgres(df: pd.DataFrame) -> None:
     })
 
     engine = get_engine()
-    pred_df.to_sql("loan_predictions", engine, if_exists="replace",
-                   index=False, chunksize=5000, method="multi")
+    with engine.begin() as conn:
+        pred_df.to_sql("loan_predictions", conn, if_exists="replace",
+                       index=False, chunksize=5000, method="multi")
     print(f"[Predictions] {len(pred_df):,} rows → loan_predictions")
 
 
