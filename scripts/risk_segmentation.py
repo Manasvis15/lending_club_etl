@@ -7,14 +7,31 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
+from sqlalchemy import create_engine
+from dotenv import load_dotenv
+import joblib
+import os
 import warnings
 warnings.filterwarnings("ignore")
 
+load_dotenv()
 BASE_DIR = Path("/home/hp/projects/lending_club_fin")
+KMEANS_PATH = BASE_DIR / "models/kmeans_model.pkl"
+CLUSTER_SCALER_PATH = BASE_DIR / "models/cluster_scaler.pkl"
+CLUSTER_COLS_PATH = BASE_DIR / "models/cluster_cols.pkl"
+
 import sys
 sys.path.insert(0, str(BASE_DIR / "scripts"))
 from cleaning import clean_pipeline
 from transformation import transform_pipeline
+
+
+def get_engine():
+    url = (
+        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    )
+    return create_engine(url)
 
 
 def load_data():
@@ -38,7 +55,7 @@ def prepare_clustering_features(df):
     X_scaled = scaler.fit_transform(X)
 
     print(f"[Clustering] Features: {cluster_cols}")
-    return X, X_scaled, cluster_cols
+    return X, X_scaled, cluster_cols, scaler
 
 
 def plot_elbow(X_scaled, max_k=10):
@@ -92,6 +109,73 @@ def fit_kmeans(X_scaled, k):
     return km, labels
 
 
+def save_clustering_model(km_model, scaler, cluster_cols):
+    """Save KMeans model, scaler and feature columns to disk."""
+    KMEANS_PATH.parent.mkdir(exist_ok=True)
+    joblib.dump(km_model, KMEANS_PATH)
+    joblib.dump(scaler, CLUSTER_SCALER_PATH)
+    joblib.dump(cluster_cols, CLUSTER_COLS_PATH)
+    print(f"[Model] KMeans saved to {KMEANS_PATH.parent}")
+
+
+def predict_cluster_single(input_dict: dict) -> dict:
+    """
+    Live cluster assignment for a single borrower.
+
+    Usage:
+        result = predict_cluster_single({
+            "loan_amnt": 15000,
+            "int_rate": 12.5,
+            "annual_inc": 60000,
+            "dti": 18.5,
+            "fico_mid": 682,
+            "open_acc": 8,
+            "revol_util": 45.0,
+            "income_to_loan_ratio": 0.25
+        })
+        print(result)
+    """
+    if not KMEANS_PATH.exists():
+        raise FileNotFoundError("KMeans model not found. Run training first.")
+
+    km_model = joblib.load(KMEANS_PATH)
+    scaler = joblib.load(CLUSTER_SCALER_PATH)
+    cluster_cols = joblib.load(CLUSTER_COLS_PATH)
+
+    input_df = pd.DataFrame([input_dict])
+    for col in cluster_cols:
+        if col not in input_df.columns:
+            input_df[col] = 0
+    input_df = input_df[cluster_cols].apply(pd.to_numeric, errors="coerce").fillna(0)
+
+    X_scaled = scaler.transform(input_df)
+    cluster = int(km_model.predict(X_scaled)[0])
+
+    # Interpret cluster
+    fico = input_dict.get("fico_mid", 0)
+    dti = input_dict.get("dti", 0)
+
+    if fico >= 720 and dti < 15:
+        risk_label = "Prime Borrowers — Low Risk"
+    elif fico >= 680 and dti < 25:
+        risk_label = "Near-Prime — Medium Risk"
+    elif fico >= 640:
+        risk_label = "Subprime — High Risk"
+    else:
+        risk_label = "Deep Subprime — Very High Risk"
+
+    result = {
+        "risk_cluster": cluster,
+        "risk_label": risk_label
+    }
+
+    print("\n=== Live Cluster Assignment ===")
+    print(f"  Cluster       : {cluster}")
+    print(f"  Risk Label    : {risk_label}")
+
+    return result
+
+
 def plot_pca_clusters(X_scaled, labels):
     pca = PCA(n_components=2, random_state=42)
     X_pca = pca.fit_transform(X_scaled)
@@ -105,7 +189,6 @@ def plot_pca_clusters(X_scaled, labels):
     plt.tight_layout()
     plt.savefig(BASE_DIR / "dashboards/grafana_screenshots/pca_clusters.png")
     plt.show()
-
     print(f"[PCA] Explained variance: {pca.explained_variance_ratio_.sum()*100:.2f}%")
 
 
@@ -183,14 +266,29 @@ def interpret_clusters(cluster_profiles):
 
 if __name__ == "__main__":
     df = load_data()
-    X_cluster, X_scaled, cluster_cols = prepare_clustering_features(df.copy())
+    X_cluster, X_scaled, cluster_cols, scaler = prepare_clustering_features(df.copy())
 
     plot_elbow(X_scaled)
     best_k = plot_silhouette(X_scaled)
 
     km_model, cluster_labels = fit_kmeans(X_scaled, best_k)
 
+    # Save clustering model for live prediction
+    save_clustering_model(km_model, scaler, cluster_cols)
+
     plot_pca_clusters(X_scaled, cluster_labels)
     cluster_profiles = plot_cluster_profiles(X_cluster, cluster_cols, cluster_labels)
     plot_default_by_cluster(df, cluster_labels)
     interpret_clusters(cluster_profiles)
+
+    # Example live cluster prediction
+    predict_cluster_single({
+        "loan_amnt": 15000,
+        "int_rate": 12.5,
+        "annual_inc": 60000,
+        "dti": 18.5,
+        "fico_mid": 682,
+        "open_acc": 8,
+        "revol_util": 45.0,
+        "income_to_loan_ratio": 0.25
+    })
